@@ -1,0 +1,37 @@
+name: Build Android APK
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [ "main" ]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v4
+    - name: Set up Python
+        # Kivy/Buildozer יציב עם Python 3.11
+      uses: actions/setup-python@v5
+      with:
+        python-version: '3.11'
+    - name: Install system deps
+      run: |
+        sudo apt update
+        sudo apt install -y zip unzip openjdk-17-jdk libffi-dev libssl-dev
+    - name: Create venv
+      run: python -m venv env && source env/bin/activate && pip install --upgrade pip
+    - name: Install buildozer
+      run: |
+        source env/bin/activate
+        pip install buildozer cython virtualenv
+        pip install "Cython<3.0.10"
+    - name: Build debug APK
+      run: |
+        source env/bin/activate
+        buildozer android debug
+    - name: Upload APK artifact
+      uses: actions/upload-artifact@v4
+      with:
+        name: BoodupPark-APK
+        path: bin/*.apk
